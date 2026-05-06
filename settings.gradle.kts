@@ -17,3 +17,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "eventsource-stream-kotlin"
+
