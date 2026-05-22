@@ -13,6 +13,16 @@ class Utf8StreamTest {
 
     @Test
     fun validStreams() = runTest {
+        // Upstream Utf8Stream is generic over `B: AsRef<[u8]>`, so the test exercises both
+        // a byte-literal input (`b"Hello, world!"`, `&[u8; N]`) and a `&str` input. Both
+        // forms reduce to the same ByteArray in Kotlin, so the duplicated assertion just
+        // re-runs the same input shape; it's kept here to preserve the upstream test order.
+        assertEquals(
+            listOf("Hello, world!"),
+            flowOf("Hello, world!".encodeToByteArray())
+                .asUtf8Stream()
+                .toList(),
+        )
         assertEquals(
             listOf("Hello, world!"),
             flowOf("Hello, world!".encodeToByteArray())
