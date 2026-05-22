@@ -1,4 +1,4 @@
-// port-lint: source src/utf8_stream.rs
+// port-lint: source utf8_stream.rs
 package io.github.kotlinmania.eventsourcestream
 
 import kotlinx.coroutines.flow.flowOf

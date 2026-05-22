@@ -72,16 +72,18 @@ The discipline:
 Every Kotlin file MUST start with:
 
 ```kotlin
-// port-lint: source <path-relative-to-tmp/eventsource-stream>
+// port-lint: source <path-relative-to-tmp/eventsource-stream/src>
 package io.github.kotlinmania.eventsourcestream
 ```
 
 Example:
 
 ```kotlin
-// port-lint: source src/lib.rs
+// port-lint: source lib.rs
 package io.github.kotlinmania.eventsourcestream
 ```
+
+The source path is relative to the directory `.ast_distance_config.json` names in `source.path` (`tmp/eventsource-stream/src`), not the upstream repo root. So `event.rs` — not `src/event.rs`. Files under `tmp/eventsource-stream/tests/` are referenced as `tests/<name>.rs`.
 
 This is how `ast_distance` tracks provenance. Never remove or alter unless the file is being re-targeted to a different Rust source.
 

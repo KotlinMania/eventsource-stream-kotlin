@@ -1,4 +1,4 @@
-// port-lint: source src/event.rs
+// port-lint: source event.rs
 package io.github.kotlinmania.eventsourcestream
 
 import kotlin.time.Duration

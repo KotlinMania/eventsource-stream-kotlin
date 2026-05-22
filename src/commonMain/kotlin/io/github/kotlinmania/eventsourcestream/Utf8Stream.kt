@@ -1,4 +1,4 @@
-// port-lint: source src/utf8_stream.rs
+// port-lint: source utf8_stream.rs
 package io.github.kotlinmania.eventsourcestream
 
 import kotlinx.coroutines.CancellationException
@@ -56,9 +56,8 @@ private fun combine(buffer: List<Byte>, chunk: ByteArray): ByteArray {
 }
 
 /**
- * Returns the length of the longest UTF-8 valid prefix of [bytes]. Mirrors Rust's
- * `String::from_utf8(...).err().valid_up_to()` which both halts on invalid sequences and on
- * truncated multi-byte sequences at the end.
+ * Returns the length of the longest UTF-8 valid prefix of [bytes]. Halts on the first invalid
+ * byte sequence and also on a truncated multi-byte sequence at the end of the buffer.
  */
 internal fun validUtf8PrefixLength(bytes: ByteArray): Int {
     var i = 0

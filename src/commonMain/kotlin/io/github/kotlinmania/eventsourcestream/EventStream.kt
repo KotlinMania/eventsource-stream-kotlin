@@ -1,4 +1,4 @@
-// port-lint: source src/event_stream.rs
+// port-lint: source event_stream.rs
 package io.github.kotlinmania.eventsourcestream
 
 import kotlinx.coroutines.flow.Flow
