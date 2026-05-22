@@ -1,4 +1,4 @@
-// port-lint: source src/parser.rs
+// port-lint: source parser.rs
 package io.github.kotlinmania.eventsourcestream
 
 /**
@@ -74,14 +74,14 @@ private fun crlf(input: String): TakeResult {
     return TakeResult.Ok(input.substring(2))
 }
 
-/** Streaming `take_while_m_n(1, 1, predicate)`. */
+/** Streaming combinator that consumes exactly one character matching [predicate]. */
 private fun takeOne(input: String, predicate: (Char) -> Boolean): TakeResult {
     if (input.isEmpty()) return TakeResult.Incomplete
     if (!predicate(input[0])) return TakeResult.Error
     return TakeResult.Ok(input.substring(1))
 }
 
-/** Streaming `alt((crlf, take_while_m_n(1,1,is_cr), take_while_m_n(1,1,is_lf)))`. */
+/** Streaming combinator: matches CRLF, a bare CR, or a bare LF, trying in that order. */
 private fun endOfLine(input: String): TakeResult {
     when (val r = crlf(input)) {
         is TakeResult.Ok -> return r
@@ -103,9 +103,9 @@ private sealed class TakeSpan {
 }
 
 /**
- * Streaming `take_while(predicate)` — takes 0+ chars matching [predicate]; if input runs out
+ * Streaming combinator: takes zero or more characters matching [predicate]. If input runs out
  * while still matching, yields [TakeSpan.Incomplete] (more data may extend the match). If the
- * very first char fails [predicate], yields [TakeSpan.Empty] with empty taken span.
+ * very first character fails [predicate], yields [TakeSpan.Empty] with an empty taken span.
  */
 private fun takeWhileStreaming(input: String, predicate: (Char) -> Boolean): TakeSpan {
     var i = 0
@@ -124,8 +124,8 @@ private sealed class TakeOneOrMore {
 }
 
 /**
- * Streaming `take_while1(predicate)` — needs at least 1 matching char. If input runs out while
- * still matching, yields Incomplete. If the very first char fails, yields Error.
+ * Streaming combinator: needs at least one character matching [predicate]. If input runs out
+ * while still matching, yields Incomplete. If the very first character fails, yields Error.
  */
 private fun takeWhile1Streaming(input: String, predicate: (Char) -> Boolean): TakeOneOrMore {
     var i = 0

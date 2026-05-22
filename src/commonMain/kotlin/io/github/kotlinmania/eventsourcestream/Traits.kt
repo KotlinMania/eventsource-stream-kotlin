@@ -1,4 +1,4 @@
-// port-lint: source src/traits.rs
+// port-lint: source traits.rs
 package io.github.kotlinmania.eventsourcestream
 
 import kotlinx.coroutines.flow.Flow
