@@ -189,7 +189,7 @@ class EventStream(stream: Flow<ByteArray>) : Flow<Event> {
 sealed class EventStreamError(message: String, cause: Throwable? = null) : Throwable(message, cause) {
     /** Source stream is not valid UTF-8. */
     class Utf8(val bytes: ByteArray) :
-        EventStreamError("invalid UTF-8 in event stream") {
+        EventStreamError("UTF8 error: invalid utf-8 sequence in stream (${bytes.size} bytes)") {
         override fun equals(other: Any?): Boolean =
             other is Utf8 && bytes.contentEquals(other.bytes)
 
@@ -205,7 +205,7 @@ sealed class EventStreamError(message: String, cause: Throwable? = null) : Throw
 
     /** Underlying source stream error. */
     class Transport(cause: Throwable) :
-        EventStreamError(cause.message ?: "transport error", cause) {
+        EventStreamError("Transport error: ${cause.message ?: cause}", cause) {
         override fun equals(other: Any?): Boolean =
             other is Transport && cause === other.cause
         override fun hashCode(): Int = cause?.hashCode() ?: 0
@@ -214,7 +214,10 @@ sealed class EventStreamError(message: String, cause: Throwable? = null) : Throw
     companion object {
         internal fun from(error: Utf8StreamError): EventStreamError = when (error) {
             is Utf8StreamError.Utf8 -> Utf8(error.bytes)
-            is Utf8StreamError.Transport -> Transport(error.cause ?: error)
+            is Utf8StreamError.Transport -> {
+                val inner = error.cause
+                Transport(inner ?: error)
+            }
         }
     }
 }
