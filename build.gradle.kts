@@ -621,6 +621,54 @@ tasks.named("wasmWasiNodeTest") {
     dependsOn(patchWasmWasiNodePreopens)
 }
 
+// embedSwiftExportForXcode (from the Kotlin Multiplatform Swift Export plugin)
+// reads BUILT_PRODUCTS_DIR, TARGET_BUILD_DIR, SDK_NAME, CONFIGURATION, ARCHS,
+// FRAMEWORKS_FOLDER_PATH, and the environment variable named by
+// DEPLOYMENT_TARGET_SETTING_NAME from the Xcode-driven environment. Outside
+// Xcode (a local `./gradlew build`, the aggregate `build` task, or any CI step
+// that hasn't exported the Xcode-style env block), those variables are unset
+// and the plugin's BuildSPMSwiftExportPackage task fails property validation
+// with `property 'deploymentTargetSettingName' doesn't have a configured value`.
+//
+// The fix: skip the task when the env isn't present, unless the user is
+// explicitly running it from the CLI (e.g. `./gradlew embedSwiftExportForXcode`
+// during local Swift-test-harness debugging). Workflow `.github/workflows/swift.yml`
+// sets the full Xcode env block so the CI path still runs the task.
+//
+// Source: SWIFT_EXPORT_ROLLOUT.md, Known upstream gaps #2.
+val xcodeSwiftExportEnvironmentNames = listOf(
+    "SDK_NAME",
+    "CONFIGURATION",
+    "TARGET_BUILD_DIR",
+    "BUILT_PRODUCTS_DIR",
+    "ARCHS",
+    "FRAMEWORKS_FOLDER_PATH",
+    "DEPLOYMENT_TARGET_SETTING_NAME",
+)
+
+fun hasXcodeSwiftExportEnvironment(): Boolean {
+    if (!xcodeSwiftExportEnvironmentNames.all { !System.getenv(it).isNullOrBlank() }) {
+        return false
+    }
+    val deploymentTargetSettingName = System.getenv("DEPLOYMENT_TARGET_SETTING_NAME")
+    return !System.getenv(deploymentTargetSettingName).isNullOrBlank()
+}
+
+val swiftExportTaskDirectlyRequested =
+    gradle.startParameter.taskNames.any {
+        it == "embedSwiftExportForXcode" || it.endsWith(":embedSwiftExportForXcode")
+    }
+
+tasks.matching { it.name == "embedSwiftExportForXcode" }.configureEach {
+    onlyIf {
+        val hasXcodeEnvironment = hasXcodeSwiftExportEnvironment()
+        if (!hasXcodeEnvironment && !swiftExportTaskDirectlyRequested) {
+            logger.lifecycle("embedSwiftExportForXcode: skipped because Xcode environment variables are not present")
+        }
+        hasXcodeEnvironment || swiftExportTaskDirectlyRequested
+    }
+}
+
 // ---------------------------------------------------------------------------
 // CodeQL Java/Kotlin extraction task
 //
