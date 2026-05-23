@@ -209,7 +209,11 @@ kotlin {
         binaries.framework { baseName = "EventsourceStream"; xcf.add(this) }
     }
     iosSimulatorArm64 {
-        binaries.framework { baseName = "EventsourceStream"; xcf.add(this) }
+        binaries.framework {
+            baseName = "EventsourceStream"
+            isStatic = true
+            xcf.add(this)
+        }
     }
     iosX64 {
         binaries.framework { baseName = "EventsourceStream"; xcf.add(this) }
