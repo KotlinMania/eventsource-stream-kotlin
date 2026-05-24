@@ -49,7 +49,7 @@ License: MIT OR Apache-2.0
 
 ```kotlin
 dependencies {
-    implementation("io.github.kotlinmania:eventsource-stream-kotlin:0.1.1")
+    implementation("io.github.kotlinmania:eventsource-stream-kotlin:0.1.2")
 }
 ```
 
