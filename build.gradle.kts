@@ -58,6 +58,13 @@ val commonMainDependencyBundle =
         .findBundle(commonMainBundleName)
         .orElseThrow { GradleException("Missing libs bundle '$commonMainBundleName'") }
 
+val coroutinesTestLibrary =
+    extensions
+        .getByType(VersionCatalogsExtension::class.java)
+        .named("libs")
+        .findLibrary("kotlinx-coroutines-test")
+        .orElseThrow { GradleException("Missing libs library 'kotlinx-coroutines-test'") }
+
 fun csvProperty(name: String): Set<String> =
     providers
         .gradleProperty(name)
@@ -495,6 +502,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(coroutinesTestLibrary)
         }
         if (benchmarkEnabled) {
             val commonBenchmark = maybeCreate("commonBenchmark")
