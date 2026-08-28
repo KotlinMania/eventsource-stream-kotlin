@@ -35,3 +35,6 @@ eventsource-stream-commonMain = [
   "kotlinx-datetime",
   "collections-immutable",
 ]
+eventsource-stream-commonTest = [
+  "kotlinx-coroutines-test",
+]
