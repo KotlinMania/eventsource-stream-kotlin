@@ -3,7 +3,6 @@ package io.github.kotlinmania.eventsourcestream
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 private class EventBuilder {
@@ -35,30 +34,38 @@ private class EventBuilder {
     fun add(line: RawEventLine) {
         when (line) {
             is RawEventLine.Field -> {
-                val value = line.value ?: ""
+                val value = line.value.orEmpty()
                 when (line.name) {
                     "event" -> {
                         event.event = value
                     }
+
                     "data" -> {
                         event.data = event.data + value + '\n'
                     }
+
                     "id" -> {
                         if (!value.contains(0x0000.toChar())) {
                             event.id = value
                         }
                     }
+
                     "retry" -> {
                         val parsed = value.toULongOrNull()
                         if (parsed != null) {
                             event.retry = parsed.toLong().milliseconds
                         }
                     }
+
                     else -> {}
                 }
             }
+
             is RawEventLine.Comment -> {}
-            RawEventLine.Empty -> { isComplete = true }
+
+            RawEventLine.Empty -> {
+                isComplete = true
+            }
         }
     }
 
@@ -111,14 +118,18 @@ private class EventBuilder {
 enum class EventStreamState {
     NotStarted,
     Started,
-    Terminated;
+    Terminated,
+    ;
 
     fun isTerminated(): Boolean = this == Terminated
+
     fun isStarted(): Boolean = this == Started
 }
 
 /** A Flow of events. */
-class EventStream(stream: Flow<ByteArray>) : Flow<Event> {
+class EventStream(
+    stream: Flow<ByteArray>,
+) : Flow<Event> {
     private val source: Flow<String> = stream.asUtf8Stream()
     private val buffer = StringBuilder()
     private val builder = EventBuilder()
@@ -145,12 +156,13 @@ class EventStream(stream: Flow<ByteArray>) : Flow<Event> {
             source.collect { string ->
                 if (string.isEmpty()) return@collect
 
-                val slice = if (state.isStarted()) {
-                    string
-                } else {
-                    state = EventStreamState.Started
-                    if (isBom(string[0])) string.substring(1) else string
-                }
+                val slice =
+                    if (state.isStarted()) {
+                        string
+                    } else {
+                        state = EventStreamState.Started
+                        if (isBom(string[0])) string.substring(1) else string
+                    }
                 buffer.append(slice)
                 parseAndEmit(collector)
             }
@@ -178,18 +190,28 @@ class EventStream(stream: Flow<ByteArray>) : Flow<Event> {
                         }
                     }
                 }
-                LineParseResult.Incomplete -> return
-                is LineParseResult.Error -> throw EventStreamError.Parser(parsed.input)
+
+                LineParseResult.Incomplete -> {
+                    return
+                }
+
+                is LineParseResult.Error -> {
+                    throw EventStreamError.Parser(parsed.input)
+                }
             }
         }
     }
 }
 
 /** Error thrown while parsing an event line. */
-sealed class EventStreamError(message: String, cause: Throwable? = null) : Throwable(message, cause) {
+sealed class EventStreamError(
+    message: String,
+    cause: Throwable? = null,
+) : Throwable(message, cause) {
     /** Source stream is not valid UTF-8. */
-    class Utf8(val bytes: ByteArray) :
-        EventStreamError("UTF8 error: invalid utf-8 sequence in stream (${bytes.size} bytes)") {
+    class Utf8(
+        val bytes: ByteArray,
+    ) : EventStreamError("UTF8 error: invalid utf-8 sequence in stream (${bytes.size} bytes)") {
         override fun equals(other: Any?): Boolean =
             other is Utf8 && bytes.contentEquals(other.bytes)
 
@@ -197,27 +219,35 @@ sealed class EventStreamError(message: String, cause: Throwable? = null) : Throw
     }
 
     /** Source stream is not a valid EventStream. */
-    class Parser(val input: String) :
-        EventStreamError("Parse error: $input") {
+    class Parser(
+        val input: String,
+    ) : EventStreamError("Parse error: $input") {
         override fun equals(other: Any?): Boolean = other is Parser && input == other.input
+
         override fun hashCode(): Int = input.hashCode()
     }
 
     /** Underlying source stream error. */
-    class Transport(cause: Throwable) :
-        EventStreamError("Transport error: ${cause.message ?: cause}", cause) {
+    class Transport(
+        cause: Throwable,
+    ) : EventStreamError("Transport error: ${cause.message ?: cause}", cause) {
         override fun equals(other: Any?): Boolean =
             other is Transport && cause === other.cause
+
         override fun hashCode(): Int = cause?.hashCode() ?: 0
     }
 
     companion object {
-        internal fun from(error: Utf8StreamError): EventStreamError = when (error) {
-            is Utf8StreamError.Utf8 -> Utf8(error.bytes)
-            is Utf8StreamError.Transport -> {
-                val inner = error.cause
-                Transport(inner ?: error)
+        internal fun from(error: Utf8StreamError): EventStreamError =
+            when (error) {
+                is Utf8StreamError.Utf8 -> {
+                    Utf8(error.bytes)
+                }
+
+                is Utf8StreamError.Transport -> {
+                    val inner = error.cause
+                    Transport(inner ?: error)
+                }
             }
-        }
     }
 }
