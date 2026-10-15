@@ -34,6 +34,8 @@ kotlin-js-store/*
 !kotlin-js-store/wasm/yarn.lock
 tools/ast_distance/ast_distance
 tools/ast_distance/build/
+tools/ast_distance
+tools/
 
 # JVM heap dumps
 *.hprof

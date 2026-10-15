@@ -18,15 +18,7 @@ package io.github.kotlinmania.eventsourcestream
  *     println("received event[type=${event.event}]: ${event.data}")
  * }
  * ```
- *
- * Tracked Rust re-exports from `src/lib.rs`:
- *
- * ```rust
- * pub use event::Event;
- * pub use event_stream::{EventStream, EventStreamError};
- * pub use traits::Eventsource;
- * ```
- *
- * The Kotlin counterparts live in [Event], [EventStream], [EventStreamError], and the
- * [eventsource] extension function.
+ * Re-exports from upstream `src/lib.rs` include [Event], [EventStream], [EventStreamError],
+ * and the [eventsource] extension function.
  */
+public const val EVENTSOURCE_STREAM_VERSION: String = "0.2.3"

@@ -23,15 +23,29 @@ package io.github.kotlinmania.eventsourcestream
  */
 
 sealed class RawEventLine {
-    data class Comment(val text: String) : RawEventLine()
-    data class Field(val name: String, val value: String?) : RawEventLine()
+    data class Comment(
+        val text: String,
+    ) : RawEventLine()
+
+    data class Field(
+        val name: String,
+        val value: String?,
+    ) : RawEventLine()
+
     data object Empty : RawEventLine()
 }
 
 internal sealed class LineParseResult {
-    data class Ok(val remaining: String, val line: RawEventLine) : LineParseResult()
+    data class Ok(
+        val remaining: String,
+        val line: RawEventLine,
+    ) : LineParseResult()
+
     data object Incomplete : LineParseResult()
-    data class Error(val input: String) : LineParseResult()
+
+    data class Error(
+        val input: String,
+    ) : LineParseResult()
 }
 
 fun isLf(c: Char): Boolean = c.code == 0x000A
@@ -60,8 +74,12 @@ fun isAnyChar(c: Char): Boolean {
 }
 
 private sealed class TakeResult {
-    data class Ok(val remaining: String) : TakeResult()
+    data class Ok(
+        val remaining: String,
+    ) : TakeResult()
+
     data object Incomplete : TakeResult()
+
     data object Error : TakeResult()
 }
 
@@ -84,21 +102,38 @@ private fun takeOne(input: String, predicate: (Char) -> Boolean): TakeResult {
 /** Streaming combinator: matches CRLF, a bare CR, or a bare LF, trying in that order. */
 private fun endOfLine(input: String): TakeResult {
     when (val r = crlf(input)) {
-        is TakeResult.Ok -> return r
-        is TakeResult.Incomplete -> return TakeResult.Incomplete
+        is TakeResult.Ok -> {
+            return r
+        }
+
+        is TakeResult.Incomplete -> {
+            return TakeResult.Incomplete
+        }
+
         is TakeResult.Error -> {}
     }
     when (val r = takeOne(input, ::isCr)) {
-        is TakeResult.Ok -> return r
-        is TakeResult.Incomplete -> return TakeResult.Incomplete
+        is TakeResult.Ok -> {
+            return r
+        }
+
+        is TakeResult.Incomplete -> {
+            return TakeResult.Incomplete
+        }
+
         is TakeResult.Error -> {}
     }
     return takeOne(input, ::isLf)
 }
 
 private sealed class TakeSpan {
-    data class Ok(val taken: String, val remaining: String) : TakeSpan()
+    data class Ok(
+        val taken: String,
+        val remaining: String,
+    ) : TakeSpan()
+
     data object Incomplete : TakeSpan()
+
     data object Empty : TakeSpan()
 }
 
@@ -118,8 +153,13 @@ private fun takeWhileStreaming(input: String, predicate: (Char) -> Boolean): Tak
 }
 
 private sealed class TakeOneOrMore {
-    data class Ok(val taken: String, val remaining: String) : TakeOneOrMore()
+    data class Ok(
+        val taken: String,
+        val remaining: String,
+    ) : TakeOneOrMore()
+
     data object Incomplete : TakeOneOrMore()
+
     data object Error : TakeOneOrMore()
 }
 
@@ -138,16 +178,18 @@ private fun takeWhile1Streaming(input: String, predicate: (Char) -> Boolean): Ta
 }
 
 private fun comment(input: String): LineParseResult {
-    val afterColon = when (val r = takeOne(input, ::isColon)) {
-        is TakeResult.Ok -> r.remaining
-        is TakeResult.Incomplete -> return LineParseResult.Incomplete
-        is TakeResult.Error -> return LineParseResult.Error(input)
-    }
-    val (taken, afterAny) = when (val r = takeWhileStreaming(afterColon, ::isAnyChar)) {
-        is TakeSpan.Ok -> r.taken to r.remaining
-        TakeSpan.Empty -> "" to afterColon
-        TakeSpan.Incomplete -> return LineParseResult.Incomplete
-    }
+    val afterColon =
+        when (val r = takeOne(input, ::isColon)) {
+            is TakeResult.Ok -> r.remaining
+            is TakeResult.Incomplete -> return LineParseResult.Incomplete
+            is TakeResult.Error -> return LineParseResult.Error(input)
+        }
+    val (taken, afterAny) =
+        when (val r = takeWhileStreaming(afterColon, ::isAnyChar)) {
+            is TakeSpan.Ok -> r.taken to r.remaining
+            TakeSpan.Empty -> "" to afterColon
+            TakeSpan.Incomplete -> return LineParseResult.Incomplete
+        }
     return when (val eol = endOfLine(afterAny)) {
         is TakeResult.Ok -> LineParseResult.Ok(eol.remaining, RawEventLine.Comment(taken))
         is TakeResult.Incomplete -> LineParseResult.Incomplete
@@ -156,30 +198,37 @@ private fun comment(input: String): LineParseResult {
 }
 
 private fun field(input: String): LineParseResult {
-    val (name, afterName) = when (val r = takeWhile1Streaming(input, ::isNameChar)) {
-        is TakeOneOrMore.Ok -> r.taken to r.remaining
-        TakeOneOrMore.Incomplete -> return LineParseResult.Incomplete
-        TakeOneOrMore.Error -> return LineParseResult.Error(input)
-    }
+    val (name, afterName) =
+        when (val r = takeWhile1Streaming(input, ::isNameChar)) {
+            is TakeOneOrMore.Ok -> r.taken to r.remaining
+            TakeOneOrMore.Incomplete -> return LineParseResult.Incomplete
+            TakeOneOrMore.Error -> return LineParseResult.Error(input)
+        }
     var rest = afterName
     var value: String? = null
     when (val r = takeOne(rest, ::isColon)) {
         is TakeResult.Ok -> {
             rest = r.remaining
-            val afterSpace = when (val s = takeOne(rest, ::isSpace)) {
-                is TakeResult.Ok -> s.remaining
-                is TakeResult.Incomplete -> return LineParseResult.Incomplete
-                is TakeResult.Error -> rest
-            }
-            val (taken, afterAny) = when (val anyR = takeWhileStreaming(afterSpace, ::isAnyChar)) {
-                is TakeSpan.Ok -> anyR.taken to anyR.remaining
-                TakeSpan.Empty -> "" to afterSpace
-                TakeSpan.Incomplete -> return LineParseResult.Incomplete
-            }
+            val afterSpace =
+                when (val s = takeOne(rest, ::isSpace)) {
+                    is TakeResult.Ok -> s.remaining
+                    is TakeResult.Incomplete -> return LineParseResult.Incomplete
+                    is TakeResult.Error -> rest
+                }
+            val (taken, afterAny) =
+                when (val anyR = takeWhileStreaming(afterSpace, ::isAnyChar)) {
+                    is TakeSpan.Ok -> anyR.taken to anyR.remaining
+                    TakeSpan.Empty -> "" to afterSpace
+                    TakeSpan.Incomplete -> return LineParseResult.Incomplete
+                }
             value = taken
             rest = afterAny
         }
-        is TakeResult.Incomplete -> return LineParseResult.Incomplete
+
+        is TakeResult.Incomplete -> {
+            return LineParseResult.Incomplete
+        }
+
         is TakeResult.Error -> {
             // No colon; the entire token is just a bare field name.
         }
@@ -200,13 +249,25 @@ private fun empty(input: String): LineParseResult =
 
 internal fun line(input: String): LineParseResult {
     when (val r = comment(input)) {
-        is LineParseResult.Ok -> return r
-        is LineParseResult.Incomplete -> return LineParseResult.Incomplete
+        is LineParseResult.Ok -> {
+            return r
+        }
+
+        is LineParseResult.Incomplete -> {
+            return LineParseResult.Incomplete
+        }
+
         is LineParseResult.Error -> {}
     }
     when (val r = field(input)) {
-        is LineParseResult.Ok -> return r
-        is LineParseResult.Incomplete -> return LineParseResult.Incomplete
+        is LineParseResult.Ok -> {
+            return r
+        }
+
+        is LineParseResult.Incomplete -> {
+            return LineParseResult.Incomplete
+        }
+
         is LineParseResult.Error -> {}
     }
     return empty(input)

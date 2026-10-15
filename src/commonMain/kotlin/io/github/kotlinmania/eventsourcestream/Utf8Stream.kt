@@ -17,36 +17,37 @@ import kotlinx.coroutines.flow.flow
  *   - Upon upstream completion with non-empty buffer, the buffer is decoded; if invalid,
  *     [Utf8StreamError.Utf8] is thrown.
  */
-fun Flow<ByteArray>.asUtf8Stream(): Flow<String> = flow {
-    val buffer = ArrayList<Byte>()
-    var terminatedByError = false
-    try {
-        collect { chunk ->
-            val combined = if (buffer.isEmpty()) chunk else combine(buffer, chunk)
-            val validLen = validUtf8PrefixLength(combined)
-            val prefix = combined.decodeToString(0, validLen)
-            buffer.clear()
-            for (i in validLen until combined.size) buffer.add(combined[i])
-            emit(prefix)
+fun Flow<ByteArray>.asUtf8Stream(): Flow<String> =
+    flow {
+        val buffer = ArrayList<Byte>()
+        var terminatedByError = false
+        try {
+            collect { chunk ->
+                val combined = if (buffer.isEmpty()) chunk else combine(buffer, chunk)
+                val validLen = validUtf8PrefixLength(combined)
+                val prefix = combined.decodeToString(0, validLen)
+                buffer.clear()
+                for (i in validLen until combined.size) buffer.add(combined[i])
+                emit(prefix)
+            }
+        } catch (t: CancellationException) {
+            throw t
+        } catch (t: Utf8StreamError) {
+            terminatedByError = true
+            throw t
+        } catch (t: Throwable) {
+            terminatedByError = true
+            throw Utf8StreamError.Transport(t)
         }
-    } catch (t: CancellationException) {
-        throw t
-    } catch (t: Utf8StreamError) {
-        terminatedByError = true
-        throw t
-    } catch (t: Throwable) {
-        terminatedByError = true
-        throw Utf8StreamError.Transport(t)
-    }
-    if (!terminatedByError && buffer.isNotEmpty()) {
-        val remaining = buffer.toByteArray()
-        val validLen = validUtf8PrefixLength(remaining)
-        if (validLen != remaining.size) {
-            throw Utf8StreamError.Utf8(remaining)
+        if (!terminatedByError && buffer.isNotEmpty()) {
+            val remaining = buffer.toByteArray()
+            val validLen = validUtf8PrefixLength(remaining)
+            if (validLen != remaining.size) {
+                throw Utf8StreamError.Utf8(remaining)
+            }
+            emit(remaining.decodeToString())
         }
-        emit(remaining.decodeToString())
     }
-}
 
 private fun combine(buffer: List<Byte>, chunk: ByteArray): ByteArray {
     val out = ByteArray(buffer.size + chunk.size)
@@ -63,14 +64,15 @@ internal fun validUtf8PrefixLength(bytes: ByteArray): Int {
     var i = 0
     while (i < bytes.size) {
         val b = bytes[i].toInt() and 0xFF
-        val seqLen = when {
-            b < 0x80 -> 1
-            b < 0xC2 -> return i
-            b < 0xE0 -> 2
-            b < 0xF0 -> 3
-            b < 0xF8 -> 4
-            else -> return i
-        }
+        val seqLen =
+            when {
+                b < 0x80 -> 1
+                b < 0xC2 -> return i
+                b < 0xE0 -> 2
+                b < 0xF0 -> 3
+                b < 0xF8 -> 4
+                else -> return i
+            }
         if (i + seqLen > bytes.size) return i
         for (j in 1 until seqLen) {
             val cb = bytes[i + j].toInt() and 0xFF
@@ -82,10 +84,14 @@ internal fun validUtf8PrefixLength(bytes: ByteArray): Int {
 }
 
 /** Errors emitted by [asUtf8Stream]. */
-sealed class Utf8StreamError(message: String, cause: Throwable? = null) : Throwable(message, cause) {
+sealed class Utf8StreamError(
+    message: String,
+    cause: Throwable? = null,
+) : Throwable(message, cause) {
     /** Source stream is not valid UTF-8. */
-    class Utf8(val bytes: ByteArray) :
-        Utf8StreamError("invalid UTF-8 in stream") {
+    class Utf8(
+        val bytes: ByteArray,
+    ) : Utf8StreamError("invalid UTF-8 in stream") {
         override fun equals(other: Any?): Boolean =
             other is Utf8 && bytes.contentEquals(other.bytes)
 
@@ -93,6 +99,7 @@ sealed class Utf8StreamError(message: String, cause: Throwable? = null) : Throwa
     }
 
     /** Underlying source stream error. */
-    class Transport(cause: Throwable) :
-        Utf8StreamError(cause.message ?: "transport error", cause)
+    class Transport(
+        cause: Throwable,
+    ) : Utf8StreamError(cause.message ?: "transport error", cause)
 }
