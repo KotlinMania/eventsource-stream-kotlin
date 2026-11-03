@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 coroutines = "1.11.0"
 serialization = "1.11.0"
 datetime = "0.8.0"
@@ -13,6 +13,7 @@ futuresKotlin = "0.2.0"
 httpKotlin = "0.1.3"
 
 [plugins]
+android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "androidKmp" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 android-kmp = { id = "com.android.kotlin.multiplatform.library", version.ref = "androidKmp" }
@@ -35,8 +36,6 @@ http-kotlin = { module = "io.github.kotlinmania:http-kotlin", version.ref = "htt
 [bundles]
 eventsource-stream-commonMain = [
   "kotlinx-coroutines-core",
-  "kotlinx-serialization-core",
-  "kotlinx-serialization-json",
   "kotlinx-datetime",
   "collections-immutable",
   "futures-kotlin",

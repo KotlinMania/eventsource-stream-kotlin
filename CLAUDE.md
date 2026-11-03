@@ -172,7 +172,7 @@ Workflow:
 
 Reference example: [/Volumes/stuff/Projects/kotlinmania/serde-kotlin/tmp/serde/serde_core/src/private/mod.rs](/Volumes/stuff/Projects/kotlinmania/serde-kotlin/tmp/serde/serde_core/src/private/mod.rs)
 re-exports `Result` from `crate::lib::result`. The Kotlin tracking file lives at
-[/Volumes/stuff/Projects/kotlinmania/serde-kotlin/src/commonMain/kotlin/io/github/kotlinmania/serde/core/private/Mod.kt](/Volumes/stuff/Projects/kotlinmania/serde-kotlin/src/commonMain/kotlin/io/github/kotlinmania/serde/core/private/Mod.kt).
+[/Volumes/stuff/Projects/kotlinmania/serde-kotlin/src/common/commonMain/kotlin/io/github/kotlinmania/serde/core/private/Mod.kt](/Volumes/stuff/Projects/kotlinmania/serde-kotlin/src/common/commonMain/kotlin/io/github/kotlinmania/serde/core/private/Mod.kt).
 A caller that previously did `import io.github.kotlinmania.serde.core.private.Result` is
 rewritten to `import kotlin.Result as Result` (or just removes the import and relies on the
 auto-imported `kotlin.Result`).
