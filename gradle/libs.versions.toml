@@ -12,6 +12,8 @@ kotlinxBenchmark = "0.5.0"
 futuresKotlin = "0.2.0"
 httpKotlin = "0.1.3"
 
+androidxTestRunner = "1.7.0"
+
 [plugins]
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "androidKmp" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -32,6 +34,8 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "kotlinxBenchmark" }
 futures-kotlin = { module = "io.github.kotlinmania:futures-kotlin", version.ref = "futuresKotlin" }
 http-kotlin = { module = "io.github.kotlinmania:http-kotlin", version.ref = "httpKotlin" }
+
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxTestRunner" }
 
 [bundles]
 eventsource-stream-commonMain = [
