@@ -18,14 +18,14 @@ struct EventsourceStreamExportTests {
 
     @Test("SSE parser line combinators and character predicates behave accurately")
     func parserLineAndCharacterPredicates() {
-        #expect(isLf(c: "\n"))
-        #expect(isCr(c: "\r"))
-        #expect(isSpace(c: " "))
-        #expect(isColon(c: ":"))
-        #expect(isBom(c: "\u{FEFF}"))
-        #expect(isNameChar(c: "a"))
-        #expect(!isNameChar(c: ":"))
-        #expect(isAnyChar(c: ":"))
+        #expect(isLf(c: 0x0A))
+        #expect(isCr(c: 0x0D))
+        #expect(isSpace(c: 0x20))
+        #expect(isColon(c: 0x3A))
+        #expect(isBom(c: 0xFEFF))
+        #expect(isNameChar(c: 0x61)) // 'a'
+        #expect(!isNameChar(c: 0x3A)) // ':'
+        #expect(isAnyChar(c: 0x3A)) // ':'
 
         let fieldResult = line(input: "event: message\ndata: hello\n\n")
         if let ok = fieldResult as? LineParseResult.Ok {
