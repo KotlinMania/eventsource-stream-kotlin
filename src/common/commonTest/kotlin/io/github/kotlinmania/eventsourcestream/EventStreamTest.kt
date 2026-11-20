@@ -1,4 +1,4 @@
-// port-lint: source event_stream.rs
+// port-lint: tests event_stream.rs
 package io.github.kotlinmania.eventsourcestream
 
 import kotlinx.coroutines.flow.flowOf

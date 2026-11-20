@@ -1,21 +1,65 @@
-#if canImport(Testing)
 import Testing
 import EventsourceStream
 
 @Suite("EventsourceStream Swift Export Tests")
 struct EventsourceStreamExportTests {
-    @Test("Swift module loads")
-    func testSwiftModuleLoads() {
-        #expect(Bool(true), "EventsourceStream swift module imported cleanly")
-    }
-}
-#elseif canImport(XCTest)
-import XCTest
-import EventsourceStream
+    @Test("Event defaults, mutation, and clone work across Swift Export")
+    func eventCreationAndClone() {
+        let event = Event(event: "update", data: "payload", id: "42", retry: nil)
+        #expect(event.event == "update")
+        #expect(event.data == "payload")
+        #expect(event.id == "42")
 
-final class EventsourceStreamExportTests: XCTestCase {
-    func testSwiftModuleLoads() throws {
-        XCTAssertTrue(true, "EventsourceStream swift module imported cleanly")
+        let cloned = event.clone()
+        cloned.data = "mutated"
+        #expect(event.data == "payload")
+        #expect(cloned.data == "mutated")
+    }
+
+    @Test("SSE parser line combinators and character predicates behave accurately")
+    func parserLineAndCharacterPredicates() {
+        #expect(isLf(c: "\n"))
+        #expect(isCr(c: "\r"))
+        #expect(isSpace(c: " "))
+        #expect(isColon(c: ":"))
+        #expect(isBom(c: "\u{FEFF}"))
+        #expect(isNameChar(c: "a"))
+        #expect(!isNameChar(c: ":"))
+        #expect(isAnyChar(c: ":"))
+
+        let fieldResult = line(input: "event: message\ndata: hello\n\n")
+        if let ok = fieldResult as? LineParseResult.Ok {
+            #expect(ok.remaining == "data: hello\n\n")
+            if let field = ok.line as? RawEventLine.Field {
+                #expect(field.name == "event")
+                #expect(field.value == "message")
+            } else {
+                Issue.record("Expected RawEventLine.Field")
+            }
+        } else {
+            Issue.record("Expected LineParseResult.Ok")
+        }
+
+        let commentResult = line(input: ": heartbeat\r\n")
+        if let ok = commentResult as? LineParseResult.Ok, let comment = ok.line as? RawEventLine.Comment {
+            #expect(comment.text == " heartbeat")
+            #expect(ok.remaining == "")
+        } else {
+            Issue.record("Expected RawEventLine.Comment")
+        }
+
+        #expect(line(input: "data: partial") is LineParseResult.Incomplete)
+    }
+
+    @Test("EventStreamState transitions and EventStreamError payloads bridge cleanly")
+    func streamStateAndErrors() {
+        #expect(!EventStreamState.NotStarted.isStarted())
+        #expect(!EventStreamState.NotStarted.isTerminated())
+        #expect(EventStreamState.Started.isStarted())
+        #expect(EventStreamState.Terminated.isTerminated())
+
+        let parserErr = EventStreamError.Parser(input: "bad")
+        #expect(parserErr.input == "bad")
+        #expect(EVENTSOURCE_STREAM_VERSION == "0.2.3")
     }
 }
-#endif

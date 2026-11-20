@@ -35,7 +35,7 @@ sealed class RawEventLine {
     data object Empty : RawEventLine()
 }
 
-internal sealed class LineParseResult {
+sealed class LineParseResult {
     data class Ok(
         val remaining: String,
         val line: RawEventLine,
@@ -247,7 +247,7 @@ private fun empty(input: String): LineParseResult =
         is TakeResult.Error -> LineParseResult.Error(input)
     }
 
-internal fun line(input: String): LineParseResult {
+fun line(input: String): LineParseResult {
     when (val r = comment(input)) {
         is LineParseResult.Ok -> {
             return r
