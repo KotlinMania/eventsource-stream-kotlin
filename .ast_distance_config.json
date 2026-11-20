@@ -6,7 +6,7 @@
     "lang": "rust"
   },
   "target": {
-    "path": "src/commonMain/kotlin/io/github/kotlinmania/eventsourcestream",
+    "path": "src/common/commonMain/kotlin/io/github/kotlinmania/eventsourcestream",
     "lang": "kotlin"
   },
   "checks": {
